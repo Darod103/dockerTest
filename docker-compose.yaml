@@ -1,36 +1,47 @@
+version: '3.2'
 services:
-  web:
-    image: nginx:latest
-    ports:
-      - '8080:80'
+  nginx:
+    build:
+      context: ./
+      dockerfile: .docker/nginx/Dockerfile
     volumes:
-      - ./app:/var/www/html
-      - ./.docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./:/var/www
+    ports:
+      - "8080:80"
     links:
       - php-fpm
 
   php-fpm:
-    build: ./.docker/php-fpm
+    build:
+      context: ./
+      dockerfile: .docker/php-fpm/Dockerfile
     volumes:
-      - ./app:/var/www/html
-
-  mysql:
-    image: mysql:8
-    ports:
-      - '3306:3306'
+      - ./:/var/www
     environment:
-     - MYSQL_ROOT_PASSWORD=root
-    volumes:
-      - ./.docker/db_storage:/var/lib/mysql
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    ports:
-      - '9090:80'
-    environment:
-      - PMA_HOST=mysql
-      - PMA_PORT=3306
-    depends_on:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+    links:
       - mysql
 
-
+  mysql:
+    image: mysql:8.0
+    volumes:
+      - ./.docker/db_storage:/var/lib/mysql
+    environment:
+      - "MYSQL_ROOT_PASSWORD=secret"
+      - "MYSQL_USER=user"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_DATABASE=app"
+    ports:
+      - "33061:3306"
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=user
+      - PMA_PASSWORD=secret
+      - UPLOAD_LIMIT=64M
+    restart: always
+    ports:
+      - 8081:80

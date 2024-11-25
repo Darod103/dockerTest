@@ -1,6 +1,10 @@
-FROM php:8.3-rc-fpm
+FROM php:8.1-fpm
 
-RUN apt-get -y update && apt-get upgrade -y
-RUN docker-php-ext-install pdo pdo_mysql && docker-php-ext-enable pdo_mysql
+RUN apt-get update && apt-get install -y libmcrypt-dev mariadb-client \
+    && docker-php-ext-install pdo_mysql
 
-WORKDIR /var/www/html
+RUN docker-php-ext-configure exif
+RUN docker-php-ext-install exif
+RUN docker-php-ext-enable exif
+
+WORKDIR /var/www
